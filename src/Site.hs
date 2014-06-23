@@ -23,6 +23,9 @@ import           Heist
 import qualified Heist.Interpreted as I
 ------------------------------------------------------------------------------
 import           Application
+import           Control.Monad.IO.Class
+import           Snap.Extras.CoreUtils
+import           Data.Text.Encoding
 
 
 ------------------------------------------------------------------------------
@@ -58,14 +61,51 @@ handleNewUser = method GET handleForm <|> method POST handleFormSubmit
     handleForm = render "new_user"
     handleFormSubmit = registerUser "login" "password" >> redirect "/"
 
+handleCat :: Handler App App ()
+handleCat = method GET  showCat <|>
+            method POST changeCat 
+  where
+    changeCat = do
+      method <- getParam "_method"
+      case method of
+        Just "put"    -> updateCat
+        Just "delete" -> destroyCat
+        _             -> notFound ""
+
+
+newCat :: Handler App App ()
+newCat     = render "new_cat"
+
+editCat :: Handler App App ()
+editCat    = render "edit_cat"
+
+showCat :: Handler App App ()
+showCat = do
+  id <- reqParam "id"
+  let splices = "id" ## I.textSplice (decodeUtf8 id)
+  renderWithSplices "show_cat" splices
+
+updateCat :: Handler App App ()
+updateCat  = liftIO $ putStrLn "updating a cat!"
+
+destroyCat :: Handler App App ()
+destroyCat = liftIO $ putStrLn "destroying a cat!"
+
+createCat :: Handler App App ()
+createCat  = method POST (liftIO $ putStrLn "creating a cat!")
+
 
 ------------------------------------------------------------------------------
 -- | The application's routes.
 routes :: [(ByteString, Handler App App ())]
-routes = [ ("/login",    with auth handleLoginSubmit)
-         , ("/logout",   with auth handleLogout)
-         , ("/new_user", with auth handleNewUser)
-         , ("",          serveDirectory "static")
+routes = [ ("/login",        with auth handleLoginSubmit)
+         , ("/logout",       with auth handleLogout)
+         , ("/new_user",     with auth handleNewUser)
+         , ("/cat/new",      newCat)
+         , ("/cat/:id/edit", editCat)
+         , ("/cat/:id",      handleCat)
+         , ("/cat",          createCat)
+         , ("",              serveDirectory "static")
          ]
 
 

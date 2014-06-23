@@ -43,7 +43,7 @@ Executable mouser-match
     transformers              >= 0.3.0.0,
     cryptohash                >= 0.11.1,
     errors                    >= 1.4.5,
---    snap-extras               == 0.7,
+    snap-extras               >= 0.9,
     containers                >= 0.5,
     aeson                     >= 0.6,
     Decimal                   >= 0.3,
