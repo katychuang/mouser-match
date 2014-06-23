@@ -1,0 +1,7 @@
+:set -isrc
+:set -hide-package MonadCatchIO-mtl
+:set -hide-package monads-fd
+:set -XOverloadedStrings
+
+:def snap       (\_ -> return ":load src/Main.hs\n:m + Main\nmain")
+:def snapReload (\_ -> return ":load src/Main.hs\n:m + Main\nmain\n:snap")
