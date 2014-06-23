@@ -26,6 +26,16 @@ import           Application
 import           Control.Monad.IO.Class
 import           Snap.Extras.CoreUtils
 import           Data.Text.Encoding
+import           Data.Monoid
+import Snap.Snaplet.AcidState
+import           Text.Digestive
+import           Text.Digestive.Heist
+import qualified Text.Digestive.Snap                         as DFS
+import           Text.Digestive.View
+import Validations
+import Control.Arrow ((>>>))
+import Control.Lens
+import qualified Snap.Snaplet.AcidState as AS
 
 
 ------------------------------------------------------------------------------
@@ -61,38 +71,84 @@ handleNewUser = method GET handleForm <|> method POST handleFormSubmit
     handleForm = render "new_user"
     handleFormSubmit = registerUser "login" "password" >> redirect "/"
 
-handleCat :: Handler App App ()
-handleCat = method GET  showCat <|>
-            method POST changeCat 
+specificCatHandler :: Handler App App ()
+specificCatHandler =
+  method GET  showCatHandler <|> method POST changeCat 
   where
     changeCat = do
       method <- getParam "_method"
       case method of
-        Just "put"    -> updateCat
-        Just "delete" -> destroyCat
+        Just "put"    -> updateCatHandler
+        Just "delete" -> destroyCatHandler
         _             -> notFound ""
 
 
-newCat :: Handler App App ()
-newCat     = render "new_cat"
+newCatHandler :: Handler App App ()
+newCatHandler     = render "new_cat"
 
-editCat :: Handler App App ()
-editCat    = render "edit_cat"
+editCatHandler :: Handler App App ()
+editCatHandler    = render "edit_cat"
 
-showCat :: Handler App App ()
-showCat = do
+showCatHandler :: Handler App App ()
+showCatHandler = do
   id <- reqParam "id"
-  let splices = "id" ## I.textSplice (decodeUtf8 id)
+  cat <- query GetCat
+  let splices = do {
+    "id" ## I.textSplice (decodeUtf8 id);
+    "name" ## I.textSplice (view name cat);
+  }
   renderWithSplices "show_cat" splices
 
-updateCat :: Handler App App ()
-updateCat  = liftIO $ putStrLn "updating a cat!"
+updateCatHandler :: Handler App App ()
+updateCatHandler  = liftIO $ putStrLn "updating a cat!"
 
-destroyCat :: Handler App App ()
-destroyCat = liftIO $ putStrLn "destroying a cat!"
+destroyCatHandler :: Handler App App ()
+destroyCatHandler = liftIO $ putStrLn "destroying a cat!"
 
-createCat :: Handler App App ()
-createCat  = method POST (liftIO $ putStrLn "creating a cat!")
+
+createCatForm :: (Monad m) => Form T.Text m Cat 
+createCatForm = Cat
+  <$> "name"        .: text Nothing
+  <*> "ownerName"   .: text Nothing
+  <*> "temperament" .: choice
+                       [ (Friendly, "friendly")
+                       , (Shy,      "shy")
+                       , (Fiery,    "fiery")
+                       ] Nothing
+  <*> "about"       .: text Nothing
+  <*> (pure (Base64Picture "hi"))
+
+
+nonEmpty :: (Monoid a, Eq a) => Checker T.Text a a
+nonEmpty x =
+  if (x == mempty)
+    then Left "is empty"
+    else Right x
+
+{-
+createCatValidation :: (Monad m) => Cat -> EitherT m [(T.Text, T.Text)] Cat
+createCatValidation cat = do
+  validation (view name cat) $ do
+    nonEmpty `attach` "name"
+
+  validation (view ownerName cat) $ do
+    nonEmpty `attach` "name"
+
+  validation name (view ownerName cat) (
+    nonEmpty `attach` "ownerName"
+  )
+
+-}
+
+
+createCatHandler :: Handler App App ()
+createCatHandler = method POST $ do
+  (view, result) <- DFS.runForm "createCat" createCatForm
+  case result of
+    Just c -> do
+      AS.update (NewCat c)
+      return ()
+    Nothing -> undefined
 
 
 ------------------------------------------------------------------------------
@@ -101,10 +157,10 @@ routes :: [(ByteString, Handler App App ())]
 routes = [ ("/login",        with auth handleLoginSubmit)
          , ("/logout",       with auth handleLogout)
          , ("/new_user",     with auth handleNewUser)
-         , ("/cat/new",      newCat)
-         , ("/cat/:id/edit", editCat)
-         , ("/cat/:id",      handleCat)
-         , ("/cat",          createCat)
+         , ("/cat/new",      newCatHandler)
+         , ("/cat/:id/edit", editCatHandler)
+         , ("/cat/:id",      specificCatHandler)
+         , ("/cat",          createCatHandler)
          , ("",              serveDirectory "static")
          ]
 
@@ -122,7 +178,9 @@ app = makeSnaplet "app" "An snaplet example application." Nothing $ do
     -- you'll probably want to change this to a more robust auth backend.
     a <- nestSnaplet "auth" auth $
            initJsonFileAuthManager defAuthSettings sess "users.json"
+
+    aS <- nestSnaplet "" acidState $ acidInit mempty
     addRoutes routes
     addAuthSplices h auth
-    return $ App h s a
+    return $ App h s a aS
 

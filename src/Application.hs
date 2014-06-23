@@ -27,31 +27,20 @@ import Data.ByteString
 import Control.Applicative
 import Data.ByteString
 import Data.Text
-
-------------------------------------------------------------------------------
-data App = App
-    { _heist :: Snaplet (Heist App)
-    , _sess :: Snaplet SessionManager
-    , _auth :: Snaplet (AuthManager App)
-    }
-
-makeLenses ''App
-
-instance HasHeist App where
-    heistLens = subSnaplet heist
-
-
-------------------------------------------------------------------------------
-type AppHandler = Handler App App
+import Data.Monoid
+import Control.Monad.Reader
+import Control.Monad.Reader.Class
+import Control.Monad.State.Class
+import Control.Monad.IO.Class
 
 data Temperament = Friendly 
                  | Shy
                  | Fiery
-  deriving(Data, Typeable, Show)
+  deriving(Data, Typeable, Show, Eq)
 $(deriveSafeCopy 0 'base ''Temperament)
 
 newtype Base64Picture = Base64Picture ByteString
-  deriving(Data, Typeable, Show)
+  deriving(Data, Typeable, Show, Eq)
 $(deriveSafeCopy 0 'base ''Base64Picture)
 
 data Cat = Cat
@@ -61,5 +50,42 @@ data Cat = Cat
   , _about       :: Text
   , _picture     :: Base64Picture
   }
+  deriving(Data, Typeable, Show, Eq)
+$(deriveSafeCopy 0 'base ''Cat)
 
+instance Monoid Cat where
+  mempty = Cat "" "" Friendly "" (Base64Picture "")
+  mappend x y = 
+    if (x == mempty)
+      then y
+      else x
+------------------------------------------------------------------------------
+data App = App
+    { _heist :: Snaplet (Heist App)
+    , _sess :: Snaplet SessionManager
+    , _auth :: Snaplet (AuthManager App)
+    , _acidState :: Snaplet (Acid Cat)
+    }
+
+makeLenses ''App
+makeLenses ''Cat
+
+instance HasHeist App where
+    heistLens = subSnaplet heist
+
+
+------------------------------------------------------------------------------
+type AppHandler = Handler App App
+
+
+
+
+newCat :: Cat -> Update Cat ()
+newCat c = put c
   
+getCat :: Query Cat Cat
+getCat = ask
+
+$(makeAcidic ''Cat ['newCat, 'getCat])
+instance HasAcid App Cat where
+  getAcidStore x = view snapletValue (view acidState x)
