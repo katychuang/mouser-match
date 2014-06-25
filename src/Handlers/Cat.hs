@@ -6,7 +6,8 @@ module Handlers.Cat
   , editCatHandler
   , updateCatHandler
   , destroyCatHandler
-  , specificCatHandler
+  , modifyCatHandler
+  , showCatHandler
   ) where
 
 import Control.Applicative
@@ -57,16 +58,13 @@ import Entities.Cat
   , catId
   )
 
-specificCatHandler :: Handler App App ()
-specificCatHandler =
-  method GET  showCatHandler <|> method POST changeCat 
-  where
-    changeCat = do
-      hiddenMethod <- getParam "_method"
-      case hiddenMethod of
-        Just "put"    -> updateCatHandler
-        Just "delete" -> destroyCatHandler
-        _             -> notFound ""
+modifyCatHandler :: Handler App App ()
+modifyCatHandler = do
+  hiddenMethod <- getParam "_method"
+  case hiddenMethod of
+    Just "put"    -> updateCatHandler
+    Just "delete" -> destroyCatHandler
+    _             -> notFound ""
 
 
 newCatHandler :: Handler App App ()
