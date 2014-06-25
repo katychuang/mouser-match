@@ -1,9 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-------------------------------------------------------------------------------
--- | This module is where all the routes and handlers are defined for your
--- site. The 'app' function is the initializer that combines everything
--- together and is exported by this module.
 module Site
   ( app
   ) where
@@ -31,6 +27,7 @@ import Application
   )
 import Snap.Snaplet.AcidState (acidInit)
 import Routes (routes)
+import Data.Monoid (mempty)
 
 app :: SnapletInit App App
 app = makeSnaplet "app" "An snaplet example application." Nothing $ do
@@ -44,7 +41,7 @@ app = makeSnaplet "app" "An snaplet example application." Nothing $ do
     a <- nestSnaplet "auth" auth $
            initJsonFileAuthManager defAuthSettings sess "users.json"
 
-    aS <- nestSnaplet "" acidState $ acidInit undefined
+    aS <- nestSnaplet "" acidState $ acidInit mempty
     addRoutes routes
     addAuthSplices h auth
     return $ App h s a aS

@@ -24,13 +24,13 @@ import Snap.Snaplet.AcidState
   , HasAcid
   , getAcidStore
   )
-import Entities.Cat (Cat)
+import Entities.AcidDB (AcidDB)
 
 data App = App
     { _heist :: Snaplet (Heist App)
     , _sess :: Snaplet SessionManager
     , _auth :: Snaplet (AuthManager App)
-    , _acidState :: Snaplet (Acid Cat)
+    , _acidState :: Snaplet (Acid AcidDB)
     }
 
 makeLenses ''App
@@ -40,5 +40,5 @@ instance HasHeist App where
 
 type AppHandler = Handler App App
 
-instance HasAcid App Cat where
+instance HasAcid App AcidDB where
   getAcidStore = view (acidState . snapletValue)

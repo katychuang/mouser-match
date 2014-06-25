@@ -19,10 +19,6 @@ import Control.Lens (makeLenses)
 import Data.SafeCopy (deriveSafeCopy, base)
 import Data.Data (Data, Typeable)
 import Data.ByteString (ByteString)
-import Control.Applicative 
-  ( (<$>)
-  , (<*>)
-  )
 import Data.Text (Text)
 import Data.Monoid (Monoid(..))
 import Data.IxSet
@@ -35,11 +31,11 @@ import Data.IxSet
 data Temperament = Friendly 
                  | Shy
                  | Fiery
-  deriving(Data, Typeable, Show, Eq)
+  deriving(Data, Typeable, Show, Eq, Ord)
 $(deriveSafeCopy 0 'base ''Temperament)
 
 newtype Base64Picture = Base64Picture ByteString
-  deriving(Data, Typeable, Show, Eq)
+  deriving(Data, Typeable, Show, Eq, Ord)
 $(deriveSafeCopy 0 'base ''Base64Picture)
 
 data CatData = CatData
@@ -49,7 +45,7 @@ data CatData = CatData
   , _about       :: Text
   , _picture     :: Base64Picture
   }
-  deriving(Data, Typeable, Show, Eq)
+  deriving(Data, Typeable, Show, Eq, Ord)
 $(deriveSafeCopy 0 'base ''CatData)
 
 
@@ -57,8 +53,9 @@ data Cat = Cat
   { _catId       :: Int
   , _catData     :: CatData
   }
-  deriving(Data, Typeable, Show, Eq)
+  deriving(Data, Typeable, Show, Eq, Ord)
 $(deriveSafeCopy 0 'base ''Cat)
+
 
 instance Monoid CatData where
   mempty = CatData "" "" Friendly "" (Base64Picture "")
@@ -67,7 +64,7 @@ instance Monoid CatData where
       then y
       else x
 
-instance Indexable CatData where
+instance Indexable Cat where
   empty = ixSet [ ixGen (Proxy :: Proxy Int) ]
 
 makeLenses ''CatData

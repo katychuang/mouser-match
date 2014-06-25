@@ -10,15 +10,14 @@ module Handlers.Cat
   ) where
 
 import Control.Applicative
-  ( (<$>)
-  , (<*>)
-  , (<|>)
+  ( (<|>)
   )
-import Data.ByteString (ByteString)
-import Data.ByteString.Char8 (pack)
+import Data.ByteString.Char8
+  ( pack
+  , unpack
+  )
 import Data.Text
-  ( Text
-  , pack
+  ( pack
   )
 import Snap.Core
   ( Method(..)
@@ -37,13 +36,13 @@ import Application (App)
 import Queries.Cat
   ( NewCat(..)
   , GetCat(..)
+  , AllCats(..)
   )
 import Control.Monad.IO.Class (liftIO)
 import Snap.Extras.CoreUtils
   ( reqParam
   , notFound
   )
-import Data.Text.Encoding (decodeUtf8)
 import Data.Monoid ((<>))
 import Snap.Snaplet.AcidState
   ( query
@@ -53,8 +52,7 @@ import Text.Digestive.Snap(runForm)
 import Control.Lens (view)
 import Formlets.Cat.Create(createCatFormlet)
 import Entities.Cat
-  ( Cat
-  , name
+  ( name
   , catData
   , catId
   )
@@ -64,23 +62,25 @@ specificCatHandler =
   method GET  showCatHandler <|> method POST changeCat 
   where
     changeCat = do
-      method <- getParam "_method"
-      case method of
+      hiddenMethod <- getParam "_method"
+      case hiddenMethod of
         Just "put"    -> updateCatHandler
         Just "delete" -> destroyCatHandler
         _             -> notFound ""
 
 
 newCatHandler :: Handler App App ()
-newCatHandler     = render "new_cat"
+newCatHandler = render "new_cat"
 
 editCatHandler :: Handler App App ()
-editCatHandler    = render "edit_cat"
+editCatHandler = render "edit_cat"
 
 showCatHandler :: Handler App App ()
 showCatHandler = do
-  id <- reqParam "id"
-  cat <- query GetCat
+  urlId <- reqParam "id"
+  cs <- query AllCats
+  liftIO $ putStrLn (show cs)
+  (Just cat) <- query (GetCat (read (unpack urlId)))
   let splices = do {
     "id"   #! textSplice (Data.Text.pack (show (view catId cat)));
     "name" #! textSplice (view (catData . name) cat);
@@ -92,21 +92,6 @@ updateCatHandler  = liftIO $ putStrLn "updating a cat!"
 
 destroyCatHandler :: Handler App App ()
 destroyCatHandler = liftIO $ putStrLn "destroying a cat!"
-
-{-
-createCatValidation :: (Monad m) => Cat -> EitherT m [(T.Text, T.Text)] Cat
-createCatValidation cat = do
-  validation (view name cat) $ do
-    nonEmpty `attach` "name"
-
-  validation (view ownerName cat) $ do
-    nonEmpty `attach` "name"
-
-  validation name (view ownerName cat) (
-    nonEmpty `attach` "ownerName"
-  )
-
--}
 
 createCatHandler :: Handler App App ()
 createCatHandler = method POST $ do

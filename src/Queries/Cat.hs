@@ -6,6 +6,7 @@
 module Queries.Cat
   ( NewCat(..)
   , GetCat(..)
+  , AllCats(..)
   ) where
 
 import Data.Acid
@@ -14,16 +15,43 @@ import Data.Acid
   , Query
   )
 import Control.Monad.Reader.Class (ask)
-import Control.Monad.State.Class (put)
+import Control.Monad.State.Class
+  ( put
+  , get
+  )
 import Data.IxSet
+import Control.Lens
+  ( view
+  , over
+  )
 import Entities.Cat
+  ( Cat(..)
+  , CatData(..)
+  )
+import Entities.AcidDB
+  ( AcidDB(..)
+  , cats
+  , newestCatId
+  )
 
-newCat :: CatData -> Update Cat Cat
-newCat c = put new >> return new 
-  where new = Cat {_catId = 0, _catData = c}
+newCat :: CatData -> Update AcidDB Cat
+newCat c = do
+    acidDB <- get
+    let newId = (view newestCatId acidDB) + 1
+    let new = Cat {_catId = newId, _catData = c}
+    let updatedIx = over cats (\cs -> insert new cs) acidDB
+    let updatedId = over newestCatId (\i -> i + 1) updatedIx
+    put updatedId
+    return new
   
-getCat :: Query Cat Cat
-getCat = ask
+getCat :: Int -> Query AcidDB (Maybe Cat)
+getCat catId = do 
+  acidDB <- ask
+  return $ getOne ((view cats acidDB) @= catId)
 
-$(makeAcidic ''Cat ['newCat, 'getCat])
+
+allCats :: Query AcidDB [Cat]
+allCats = ask >>= \adb -> return $ toList (view cats adb)
+
+$(makeAcidic ''AcidDB ['newCat, 'getCat, 'allCats])
 
