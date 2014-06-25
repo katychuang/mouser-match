@@ -50,6 +50,7 @@ import Formlets.Cat.Create(createCatFormlet)
 import Entities.Cat
   ( Cat
   , name
+  , catData
   )
 
 specificCatHandler :: Handler App App ()
@@ -76,7 +77,7 @@ showCatHandler = do
   cat <- query GetCat
   let splices = do {
     "id"   #! textSplice (decodeUtf8 id);
-    "name" #! textSplice (view name cat);
+    "name" #! textSplice (view (catData . name) cat);
   }
   renderWithSplices "show_cat" splices
 

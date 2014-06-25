@@ -10,7 +10,7 @@ import Text.Digestive
   , Form
   )
 import Entities.Cat
-  ( Cat(..)
+  ( CatData(..)
   , Temperament(..)
   , Base64Picture(..)
   )
@@ -21,8 +21,8 @@ import Control.Applicative
   , pure
   )
 
-createCatFormlet :: (Monad m) => Form Text m Cat 
-createCatFormlet = Cat Nothing
+createCatFormlet :: (Monad m) => Form Text m CatData
+createCatFormlet = CatData
   <$> "name"        .: text Nothing
   <*> "ownerName"   .: text Nothing
   <*> "temperament" .: choice
