@@ -15,11 +15,16 @@ import Control.Applicative
   , (<|>)
   )
 import Data.ByteString (ByteString)
-import Data.Text (Text)
+import Data.ByteString.Char8 (pack)
+import Data.Text
+  ( Text
+  , pack
+  )
 import Snap.Core
   ( Method(..)
   , method
   , getParam
+  , redirect
   )
 import Snap.Snaplet (Handler)
 import Snap.Snaplet.Heist
@@ -51,6 +56,7 @@ import Entities.Cat
   ( Cat
   , name
   , catData
+  , catId
   )
 
 specificCatHandler :: Handler App App ()
@@ -76,7 +82,7 @@ showCatHandler = do
   id <- reqParam "id"
   cat <- query GetCat
   let splices = do {
-    "id"   #! textSplice (decodeUtf8 id);
+    "id"   #! textSplice (Data.Text.pack (show (view catId cat)));
     "name" #! textSplice (view (catData . name) cat);
   }
   renderWithSplices "show_cat" splices
@@ -104,10 +110,10 @@ createCatValidation cat = do
 
 createCatHandler :: Handler App App ()
 createCatHandler = method POST $ do
-  (view, result) <- runForm "createCat" createCatFormlet
+  (_, result) <- runForm "createCat" createCatFormlet
   case result of
     Just c -> do
-      update (NewCat c)
-      return ()
+      cr <- update (NewCat c)
+      redirect ("/cat/" <> (Data.ByteString.Char8.pack (show (view catId cr))))
     Nothing -> undefined
 

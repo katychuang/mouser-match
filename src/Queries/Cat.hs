@@ -18,8 +18,9 @@ import Control.Monad.State.Class (put)
 import Data.IxSet
 import Entities.Cat
 
-newCat :: CatData -> Update Cat ()
-newCat c = put Cat {_catId = 0, _catData = c}
+newCat :: CatData -> Update Cat Cat
+newCat c = put new >> return new 
+  where new = Cat {_catId = 0, _catData = c}
   
 getCat :: Query Cat Cat
 getCat = ask
