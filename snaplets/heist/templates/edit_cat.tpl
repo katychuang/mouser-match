@@ -17,7 +17,7 @@
   <br/>
 
   <dfLabel ref="about">About: </dfLabel>
-  <dfInputTextArea ref="about" value="${about}"/>
+  <textarea name="form.about"><about/></textarea>
   <br/>
 
   <input type="hidden" name="_method" value="put" />

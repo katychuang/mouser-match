@@ -90,7 +90,7 @@ editCatHandler = do
     "temperament" #! textSplice (Data.Text.pack (show (fromEnum (view (catData . temperament) cat))));
     "about" #! textSplice (view (catData . about) cat);
   }
-  renderWithSplices "edit_cat" ((digestiveSplices v) <> splices)
+  renderWithSplices "edit_cat" (splices <> (digestiveSplices v))
 
 showCatHandler :: Handler App App ()
 showCatHandler = do
@@ -99,15 +99,20 @@ showCatHandler = do
   let splices = do {
     "id"   #! textSplice (Data.Text.pack (show (view catId cat)));
     "name" #! textSplice (view (catData . name) cat);
+    "ownerName" #! textSplice (view (catData . ownerName) cat);
+    "temperament" #! textSplice (Data.Text.pack (show (fromEnum (view (catData . temperament) cat))));
+    "about" #! textSplice (view (catData . about) cat);
   }
   renderWithSplices "show_cat" splices
 
 updateCatHandler :: Handler App App ()
 updateCatHandler = do
+
   urlId <- read <$> unpack <$> reqParam "id"
   (_, result) <- runForm "form" createCatFormlet
   case result of
     Just catData -> do
+      liftIO $ print catData
       update (UpdateCat (Cat {_catData = catData, _catId = urlId}))
       redirect ("/cat/" <> (Data.ByteString.Char8.pack (show urlId)))
     Nothing -> undefined
