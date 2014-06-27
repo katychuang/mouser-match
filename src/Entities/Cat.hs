@@ -31,7 +31,7 @@ import Data.IxSet
 data Temperament = Friendly 
                  | Shy
                  | Fiery
-  deriving(Data, Typeable, Show, Eq, Ord)
+  deriving(Data, Typeable, Show, Eq, Ord, Enum)
 $(deriveSafeCopy 0 'base ''Temperament)
 
 newtype Base64Picture = Base64Picture ByteString

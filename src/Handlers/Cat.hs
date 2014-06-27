@@ -12,6 +12,7 @@ module Handlers.Cat
 
 import Control.Applicative
   ( (<|>)
+  , (<$>)
   )
 import Data.ByteString.Char8
   ( pack
@@ -29,6 +30,7 @@ import Snap.Core
 import Snap.Snaplet (Handler)
 import Snap.Snaplet.Heist
   ( render
+  , heistLocal
   , renderWithSplices
   )
 import Heist ((#!))
@@ -38,6 +40,7 @@ import Queries.Cat
   ( NewCat(..)
   , GetCat(..)
   , AllCats(..)
+  , UpdateCat(..)
   )
 import Control.Monad.IO.Class (liftIO)
 import Snap.Extras.CoreUtils
@@ -50,12 +53,17 @@ import Snap.Snaplet.AcidState
   , update
   )
 import Text.Digestive.Snap(runForm)
+import Text.Digestive.Heist (digestiveSplices)
 import Control.Lens (view)
 import Formlets.Cat.Create(createCatFormlet)
 import Entities.Cat
   ( name
   , catData
   , catId
+  , about
+  , ownerName
+  , temperament
+  , Cat(..)
   )
 
 modifyCatHandler :: Handler App App ()
@@ -71,13 +79,22 @@ newCatHandler :: Handler App App ()
 newCatHandler = render "new_cat"
 
 editCatHandler :: Handler App App ()
-editCatHandler = render "edit_cat"
+editCatHandler = do
+  urlId <- reqParam "id"
+  (v, _) <- runForm "form" createCatFormlet
+  (Just cat) <- query (GetCat (read (unpack urlId)))
+  let splices = do {
+    "id"   #! textSplice (Data.Text.pack (show (view catId cat)));
+    "name" #! textSplice (view (catData . name) cat);
+    "ownerName" #! textSplice (view (catData . ownerName) cat);
+    "temperament" #! textSplice (Data.Text.pack (show (fromEnum (view (catData . temperament) cat))));
+    "about" #! textSplice (view (catData . about) cat);
+  }
+  renderWithSplices "edit_cat" ((digestiveSplices v) <> splices)
 
 showCatHandler :: Handler App App ()
 showCatHandler = do
   urlId <- reqParam "id"
-  cs <- query AllCats
-  liftIO $ putStrLn (show cs)
   (Just cat) <- query (GetCat (read (unpack urlId)))
   let splices = do {
     "id"   #! textSplice (Data.Text.pack (show (view catId cat)));
@@ -86,7 +103,16 @@ showCatHandler = do
   renderWithSplices "show_cat" splices
 
 updateCatHandler :: Handler App App ()
-updateCatHandler  = liftIO $ putStrLn "updating a cat!"
+updateCatHandler = do
+  urlId <- read <$> unpack <$> reqParam "id"
+  (_, result) <- runForm "form" createCatFormlet
+  case result of
+    Just catData -> do
+      update (UpdateCat (Cat {_catData = catData, _catId = urlId}))
+      redirect ("/cat/" <> (Data.ByteString.Char8.pack (show urlId)))
+    Nothing -> undefined
+
+
 
 destroyCatHandler :: Handler App App ()
 destroyCatHandler = liftIO $ putStrLn "destroying a cat!"

@@ -7,6 +7,7 @@ module Queries.Cat
   ( NewCat(..)
   , GetCat(..)
   , AllCats(..)
+  , UpdateCat(..)
   ) where
 
 import Data.Acid
@@ -27,6 +28,7 @@ import Control.Lens
 import Entities.Cat
   ( Cat(..)
   , CatData(..)
+  , catId
   )
 import Entities.AcidDB
   ( AcidDB(..)
@@ -50,8 +52,14 @@ getCat catId = do
   return $ getOne ((view cats acidDB) @= catId)
 
 
+updateCat :: Cat -> Update AcidDB ()
+updateCat cat= do
+  acidDB <- get
+  put $ over cats (\cs -> updateIx (view catId cat) cat cs) acidDB
+      
+
 allCats :: Query AcidDB [Cat]
 allCats = ask >>= \adb -> return $ toList (view cats adb)
 
-$(makeAcidic ''AcidDB ['newCat, 'getCat, 'allCats])
+$(makeAcidic ''AcidDB ['newCat, 'getCat, 'allCats, 'updateCat])
 
