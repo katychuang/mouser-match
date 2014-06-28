@@ -4,12 +4,14 @@
 module Entities.Cat
   ( Cat(..)
   , CatData(..)
+  , Location(..)
   , Temperament(..)
   , Base64Picture(..)
   , catId
   , name
   , ownerName
   , temperament
+  , location
   , about
   , picture
   , catData
@@ -34,6 +36,18 @@ data Temperament = Friendly
   deriving(Data, Typeable, Show, Eq, Ord, Enum)
 $(deriveSafeCopy 0 'base ''Temperament)
 
+data Location = Soho
+              | Tribeca
+              | Chelsea
+              | LowerEastSide
+              | FortGreene
+              | ProspectHeights
+              | Williamsburg
+              | Bushwick
+              | CrownHeights
+  deriving(Data, Typeable, Show, Eq, Ord, Enum)
+$(deriveSafeCopy 0 'base ''Location)
+
 newtype Base64Picture = Base64Picture ByteString
   deriving(Data, Typeable, Show, Eq, Ord)
 $(deriveSafeCopy 0 'base ''Base64Picture)
@@ -41,6 +55,7 @@ $(deriveSafeCopy 0 'base ''Base64Picture)
 data CatData = CatData
   { _name        :: Text
   , _ownerName   :: Text
+  , _location    :: Location
   , _temperament :: Temperament
   , _about       :: Text
   , _picture     :: Base64Picture
@@ -58,7 +73,7 @@ $(deriveSafeCopy 0 'base ''Cat)
 
 
 instance Monoid CatData where
-  mempty = CatData "" "" Friendly "" (Base64Picture "")
+  mempty = CatData "" "" (toEnum 0) (toEnum 0) "" (Base64Picture "")
   mappend x y = 
     if (x == mempty)
       then y

@@ -56,9 +56,9 @@ import Snap.Snaplet.AcidState
 import Text.Digestive.Snap(runForm)
 import Text.Digestive.Heist (bindDigestiveSplices, digestiveSplices)
 import Control.Lens (view)
-import Forms.Cat
-  ( catForm
-  , catDataForm
+import Formlets.Cat
+  ( catFormlet
+  , catDataFormlet
   )
 import Entities.Cat
   ( name
@@ -83,17 +83,17 @@ modifyCatHandler = do
 
 
 newCatHandler :: Handler App App ()
-newCatHandler = render "new_cat"
+newCatHandler = do 
+  (dfView, _) <- runForm "" (catDataFormlet Nothing)
+  heistLocal (bindDigestiveSplices  dfView) $ render "new_cat"
 
 editCatHandler :: Handler App App ()
 editCatHandler = do
   urlId <- reqParam "id"
   cat <- query (GetCat (read (unpack urlId)))
-  (v, result) <- runForm "form" (catForm cat)
-  let splices = do {
-    "id" #! textSplice (decodeUtf8 urlId);
-  }
-  renderWithSplices "edit_cat" (digestiveSplices v <> splices)
+  (dfView, result) <- runForm "form" (catFormlet cat)
+  let splices = "id" #! textSplice (decodeUtf8 urlId);
+  renderWithSplices "edit_cat" (digestiveSplices dfView <> splices)
 
 showCatHandler :: Handler App App ()
 showCatHandler = do
@@ -110,16 +110,14 @@ showCatHandler = do
 
 updateCatHandler :: Handler App App ()
 updateCatHandler = do
-  let urlId = 2
---  urlId <- read <$> unpack <$> reqParam "id"
-  (_, result) <- runForm "form" (catForm Nothing)
+  (_, result) <- runForm "form" (catFormlet Nothing)
   liftIO $ print result
   case result of
     Just cat -> do
       liftIO $ print cat
       update (UpdateCat cat)
-      redirect ("/cat/" <> (Data.ByteString.Char8.pack (show urlId)))
-    Nothing -> undefined
+      redirect ("/cat/" <> (Data.ByteString.Char8.pack (show (view catId cat))))
+    Nothing -> redirect "/cat/create"
 
 
 
@@ -128,7 +126,7 @@ destroyCatHandler = liftIO $ putStrLn "destroying a cat!"
 
 createCatHandler :: Handler App App ()
 createCatHandler = method POST $ do
-  (_, result) <- runForm "createCat" (catDataForm Nothing)
+  (_, result) <- runForm "" (catDataFormlet Nothing)
   case result of
     Just c -> do
       cr <- update (NewCat c)
