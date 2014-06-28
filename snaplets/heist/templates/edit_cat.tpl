@@ -1,7 +1,7 @@
 <h1> Editing a cat! </h1>
 
 
-<form action="/cat/${form.id}" method='POST' enctype='application/x-www-form-urlencoded'>
+<dfForm action="/cat/${id}">
   <dfChildErrorList ref="" />
 
   <dfInputHidden ref="id"/>
@@ -25,4 +25,4 @@
   </dfSubView>
   <input type="hidden" name="_method" value="put" />
   <dfInputSubmit />
-</form>
+</dfForm>

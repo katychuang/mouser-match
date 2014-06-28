@@ -21,6 +21,7 @@ import Data.ByteString.Char8
 import Data.Text
   ( pack
   )
+import Data.Text.Encoding (decodeUtf8)
 import Snap.Core
   ( Method(..)
   , method
@@ -90,7 +91,7 @@ editCatHandler = do
   cat <- query (GetCat (read (unpack urlId)))
   (v, result) <- runForm "form" (catForm cat)
   let splices = do {
-    "id" #! urlId;
+    "id" #! textSplice (decodeUtf8 urlId);
   }
   renderWithSplices "edit_cat" (digestiveSplices v <> splices)
 
