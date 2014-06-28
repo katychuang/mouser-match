@@ -33,7 +33,7 @@ import Snap.Snaplet.Heist
   , heistLocal
   , renderWithSplices
   )
-import Heist ((#!))
+import Heist ((#!), splicesToList)
 import Heist.Interpreted (textSplice)
 import Application (App)
 import Queries.Cat
@@ -53,9 +53,12 @@ import Snap.Snaplet.AcidState
   , update
   )
 import Text.Digestive.Snap(runForm)
-import Text.Digestive.Heist (digestiveSplices)
+import Text.Digestive.Heist (bindDigestiveSplices, digestiveSplices)
 import Control.Lens (view)
-import Formlets.Cat.Create(createCatFormlet)
+import Forms.Cat
+  ( catForm
+  , catDataForm
+  )
 import Entities.Cat
   ( name
   , catData
@@ -65,6 +68,9 @@ import Entities.Cat
   , temperament
   , Cat(..)
   )
+
+import Data.Text(Text)
+import Heist.Interpreted(Splice)
 
 modifyCatHandler :: Handler App App ()
 modifyCatHandler = do
@@ -81,16 +87,12 @@ newCatHandler = render "new_cat"
 editCatHandler :: Handler App App ()
 editCatHandler = do
   urlId <- reqParam "id"
-  (v, _) <- runForm "form" createCatFormlet
-  (Just cat) <- query (GetCat (read (unpack urlId)))
+  cat <- query (GetCat (read (unpack urlId)))
+  (v, result) <- runForm "form" (catForm cat)
   let splices = do {
-    "id"   #! textSplice (Data.Text.pack (show (view catId cat)));
-    "name" #! textSplice (view (catData . name) cat);
-    "ownerName" #! textSplice (view (catData . ownerName) cat);
-    "temperament" #! textSplice (Data.Text.pack (show (fromEnum (view (catData . temperament) cat))));
-    "about" #! textSplice (view (catData . about) cat);
+    "id" #! urlId;
   }
-  renderWithSplices "edit_cat" (splices <> (digestiveSplices v))
+  renderWithSplices "edit_cat" (digestiveSplices v <> splices)
 
 showCatHandler :: Handler App App ()
 showCatHandler = do
@@ -107,13 +109,14 @@ showCatHandler = do
 
 updateCatHandler :: Handler App App ()
 updateCatHandler = do
-
-  urlId <- read <$> unpack <$> reqParam "id"
-  (_, result) <- runForm "form" createCatFormlet
+  let urlId = 2
+--  urlId <- read <$> unpack <$> reqParam "id"
+  (_, result) <- runForm "form" (catForm Nothing)
+  liftIO $ print result
   case result of
-    Just catData -> do
-      liftIO $ print catData
-      update (UpdateCat (Cat {_catData = catData, _catId = urlId}))
+    Just cat -> do
+      liftIO $ print cat
+      update (UpdateCat cat)
       redirect ("/cat/" <> (Data.ByteString.Char8.pack (show urlId)))
     Nothing -> undefined
 
@@ -124,7 +127,7 @@ destroyCatHandler = liftIO $ putStrLn "destroying a cat!"
 
 createCatHandler :: Handler App App ()
 createCatHandler = method POST $ do
-  (_, result) <- runForm "createCat" createCatFormlet
+  (_, result) <- runForm "createCat" (catDataForm Nothing)
   case result of
     Just c -> do
       cr <- update (NewCat c)
