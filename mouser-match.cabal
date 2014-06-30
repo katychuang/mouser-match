@@ -52,7 +52,8 @@ Executable mouser-match
     digestive-functors-heist  >= 0.8.5,
     digestive-functors-snap   >= 0.6,
     validations               >= 0.1.0.1,
-    ixset                     >= 1.0.5
+    ixset                     >= 1.0.5,
+    text-format               >= 0.3.1.1
 
 
   if flag(development)

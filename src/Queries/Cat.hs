@@ -24,6 +24,10 @@ import Data.IxSet
 import Control.Lens
   ( view
   , over
+  , (^.)
+  , (+=)
+  , (%=)
+  , use
   )
 import Entities.Cat
   ( Cat(..)
@@ -35,31 +39,29 @@ import Entities.AcidDB
   , cats
   , newestCatId
   )
+import Control.Applicative ((<$>))
 
 newCat :: CatData -> Update AcidDB Cat
 newCat c = do
-    acidDB <- get
-    let newId = (view newestCatId acidDB) + 1
-    let new = Cat {_catId = newId, _catData = c}
-    let updatedIx = over cats (\cs -> insert new cs) acidDB
-    let updatedId = over newestCatId (\i -> i + 1) updatedIx
-    put updatedId
+    id <- use newestCatId
+    let new = Cat {_catId = id, _catData = c}
+    cats %= (\cs -> insert new cs)
+    newestCatId += 1
     return new
   
 getCat :: Int -> Query AcidDB (Maybe Cat)
-getCat catId = do 
-  acidDB <- ask
-  return $ getOne ((view cats acidDB) @= catId)
+getCat catId = do
+  cs <- view cats
+  return $ getOne (cs @= catId)
 
 
 updateCat :: Cat -> Update AcidDB ()
-updateCat cat= do
-  acidDB <- get
-  put $ over cats (\cs -> updateIx (view catId cat) cat cs) acidDB
+updateCat cat = cats %= updateIx (cat^.catId) cat
       
 
 allCats :: Query AcidDB [Cat]
-allCats = ask >>= \adb -> return $ toList (view cats adb)
+allCats = toList <$> view cats
+
 
 $(makeAcidic ''AcidDB ['newCat, 'getCat, 'allCats, 'updateCat])
 
