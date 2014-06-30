@@ -54,14 +54,11 @@ getCat catId = do
   cs <- view cats
   return $ getOne (cs @= catId)
 
-
 updateCat :: Cat -> Update AcidDB ()
 updateCat cat = cats %= updateIx (cat^.catId) cat
       
-
 allCats :: Query AcidDB [Cat]
 allCats = toList <$> view cats
-
 
 $(makeAcidic ''AcidDB ['newCat, 'getCat, 'allCats, 'updateCat])
 
