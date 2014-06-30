@@ -67,11 +67,14 @@ import Entities.Cat
   , about
   , ownerName
   , temperament
+  , location
   , Cat(..)
   )
 
 import Data.Text(Text)
 import Heist.Interpreted(Splice)
+import Text.Digestive.View(viewInput, getForm, postForm)
+import Choice (Choice(..))
 
 modifyCatHandler :: Handler App App ()
 modifyCatHandler = do
@@ -91,8 +94,8 @@ editCatHandler :: Handler App App ()
 editCatHandler = do
   urlId <- reqParam "id"
   cat <- query (GetCat (read (unpack urlId)))
-  (dfView, result) <- runForm "form" (catFormlet cat)
-  let splices = "id" #! textSplice (decodeUtf8 urlId);
+  (dfView, result) <- runForm "" (catFormlet cat)
+  let splices = "id" #! textSplice (decodeUtf8 urlId)
   renderWithSplices "edit_cat" (digestiveSplices dfView <> splices)
 
 showCatHandler :: Handler App App ()
@@ -103,18 +106,17 @@ showCatHandler = do
     "id"   #! textSplice (Data.Text.pack (show (view catId cat)));
     "name" #! textSplice (view (catData . name) cat);
     "ownerName" #! textSplice (view (catData . ownerName) cat);
-    "temperament" #! textSplice (Data.Text.pack (show (fromEnum (view (catData . temperament) cat))));
+    "location" #! textSplice (renderChoice (view (catData . location) cat));
+    "temperament" #! textSplice (renderChoice (view (catData . temperament) cat));
     "about" #! textSplice (view (catData . about) cat);
-  }
+  };
   renderWithSplices "show_cat" splices
 
 updateCatHandler :: Handler App App ()
 updateCatHandler = do
-  (_, result) <- runForm "form" (catFormlet Nothing)
-  liftIO $ print result
+  (v', result) <- runForm "" (catFormlet Nothing)
   case result of
     Just cat -> do
-      liftIO $ print cat
       update (UpdateCat cat)
       redirect ("/cat/" <> (Data.ByteString.Char8.pack (show (view catId cat))))
     Nothing -> redirect "/cat/create"
