@@ -10,75 +10,34 @@ module Handlers.Cat
   , showCatHandler
   ) where
 
-import Control.Applicative
-  ( (<|>)
-  , (<$>)
-  )
-import Data.ByteString.Char8
-  ( pack
-  , unpack
-  )
-import Data.Text
-  ( pack
-  )
-import Data.Text.Encoding (decodeUtf8)
-import Snap.Core
-  ( Method(..)
-  , method
-  , getParam
-  , redirect
-  )
-import Snap.Snaplet (Handler)
-import Snap.Snaplet.Heist
-  ( render
-  , heistLocal
-  , renderWithSplices
-  )
-import Heist ((#!), splicesToList)
-import Heist.Interpreted (textSplice)
-import Application (App)
-import Queries.Cat
-  ( NewCat(..)
-  , GetCat(..)
-  , AllCats(..)
-  , UpdateCat(..)
-  )
-import Control.Monad.IO.Class (liftIO)
-import Snap.Extras.CoreUtils
-  ( reqParam
-  , notFound
-  )
-import Data.Monoid ((<>))
-import Snap.Snaplet.AcidState
-  ( query
-  , update
-  )
-import Text.Digestive.Snap(runForm)
-import Text.Digestive.Heist (bindDigestiveSplices, digestiveSplices)
-import Control.Lens
-  ( (^.)
-  , to
-  )
-import Formlets.Cat
-  ( catFormlet
-  , catDataFormlet
-  )
-import Entities.Cat
-  ( name
-  , catData
-  , catId
-  , about
-  , ownerName
-  , temperament
-  , location
-  , Cat(..)
-  )
-
-import Data.Text(Text)
-import Heist.Interpreted(Splice)
-import Text.Digestive.View(viewInput, getForm, postForm)
-import Choice (Choice(..))
-import Control.Arrow((>>>))
+import           Application            (App)
+import           Choice                 (Choice (..))
+import           Control.Applicative    ((<$>), (<|>))
+import           Control.Arrow          ((>>>))
+import           Control.Lens           (to, (^.))
+import           Control.Monad.IO.Class (liftIO)
+import           Data.ByteString.Char8  (pack, unpack)
+import           Data.Monoid            ((<>))
+import           Data.Text              (pack)
+import           Data.Text              (Text)
+import           Data.Text.Encoding     (decodeUtf8)
+import           Entities.Cat           (Cat (..), about, catData, catId,
+                                         location, name, ownerName, temperament)
+import           Formlets.Cat           (catDataFormlet, catFormlet)
+import           Heist                  (splicesToList, ( #! ))
+import           Heist.Interpreted      (textSplice)
+import           Heist.Interpreted      (Splice)
+import           Queries.Cat            (AllCats (..), GetCat (..), NewCat (..),
+                                         UpdateCat (..))
+import           Snap.Core              (Method (..), getParam, method,
+                                         redirect)
+import           Snap.Extras.CoreUtils  (notFound, reqParam)
+import           Snap.Snaplet           (Handler)
+import           Snap.Snaplet.AcidState (query, update)
+import           Snap.Snaplet.Heist     (heistLocal, render, renderWithSplices)
+import           Text.Digestive.Heist   (bindDigestiveSplices, digestiveSplices)
+import           Text.Digestive.Snap    (runForm)
+import           Text.Digestive.View    (getForm, postForm, viewInput)
 
 modifyCatHandler :: Handler App App ()
 modifyCatHandler = do
@@ -88,9 +47,8 @@ modifyCatHandler = do
     Just "delete" -> destroyCatHandler
     _             -> notFound ""
 
-
 newCatHandler :: Handler App App ()
-newCatHandler = do 
+newCatHandler = do
   (dfView, _) <- runForm "" $ catDataFormlet Nothing
   heistLocal (bindDigestiveSplices  dfView) $ render "new_cat"
 
@@ -107,7 +65,7 @@ showCatHandler :: Handler App App ()
 showCatHandler = do
   urlId <- reqParam "id"
   result <- query (GetCat (read (unpack urlId)))
-  case result of 
+  case result of
     Just cat -> do
       let catText   lens = cat^.catData.lens.to textSplice
       let catChoice lens = cat^.catData.lens.to (renderChoice >>> textSplice)
@@ -129,20 +87,17 @@ updateCatHandler = do
   case result of
     Just cat -> do
       update $ UpdateCat cat
-      redirect $ "/cat/" <> cat^.catId.to (show >>> Data.ByteString.Char8.pack) 
+      redirect $ "/cat/" <> cat^.catId.to (show >>> Data.ByteString.Char8.pack)
     Nothing -> redirect "/cat/create"
-
-
 
 destroyCatHandler :: Handler App App ()
 destroyCatHandler = liftIO $ putStrLn "destroying a cat!"
 
 createCatHandler :: Handler App App ()
-createCatHandler = method POST $ do
+createCatHandler = do
   (_, result) <- runForm "" (catDataFormlet Nothing)
   case result of
     Just catData -> do
       cat <- update (NewCat catData)
       redirect $ "/cat/" <> cat^.catId.to (show >>> Data.ByteString.Char8.pack)
     Nothing -> undefined
-

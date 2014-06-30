@@ -1,5 +1,5 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE TemplateHaskell    #-}
 
 module Entities.Cat
   ( Cat(..)
@@ -17,20 +17,15 @@ module Entities.Cat
   , catData
   ) where
 
-import Control.Lens (makeLenses)
-import Data.SafeCopy (deriveSafeCopy, base)
-import Data.Data (Data, Typeable)
-import Data.ByteString (ByteString)
-import Data.Text (Text)
-import Data.Monoid (Monoid(..))
-import Data.IxSet
-  ( Indexable(..)
-  , ixGen
-  , ixSet
-  , Proxy(..)
-  )
+import           Control.Lens    (makeLenses)
+import           Data.ByteString (ByteString)
+import           Data.Data       (Data, Typeable)
+import           Data.IxSet      (Indexable (..), Proxy (..), ixGen, ixSet)
+import           Data.Monoid     (Monoid (..))
+import           Data.SafeCopy   (base, deriveSafeCopy)
+import           Data.Text       (Text)
 
-data Temperament = Friendly 
+data Temperament = Friendly
                  | Shy
                  | Fiery
   deriving(Data, Typeable, Show, Eq, Ord, Enum)
@@ -65,8 +60,8 @@ $(deriveSafeCopy 0 'base ''CatData)
 
 
 data Cat = Cat
-  { _catId       :: Int
-  , _catData     :: CatData
+  { _catId   :: Int
+  , _catData :: CatData
   }
   deriving(Data, Typeable, Show, Eq, Ord)
 $(deriveSafeCopy 0 'base ''Cat)
@@ -74,7 +69,7 @@ $(deriveSafeCopy 0 'base ''Cat)
 
 instance Monoid CatData where
   mempty = CatData "" "" (toEnum 0) (toEnum 0) "" (Base64Picture "")
-  mappend x y = 
+  mappend x y =
     if (x == mempty)
       then y
       else x

@@ -4,23 +4,15 @@ module Routes
   ( routes
   ) where
 
-import Data.ByteString (ByteString)
-import Snap.Snaplet (Handler)
-import Snap.Util.FileServe (serveDirectory)
-import Application (App)
-import Snap.Core
-  ( Method(..)
-  , method
-  )
-import Handlers.Cat
-  ( newCatHandler
-  , editCatHandler
-  , modifyCatHandler
-  , createCatHandler
-  , updateCatHandler
-  , destroyCatHandler
-  , showCatHandler
-  )
+import           Application         (App)
+import           Data.ByteString     (ByteString)
+import           Handlers.Cat        (createCatHandler, destroyCatHandler,
+                                      editCatHandler, modifyCatHandler,
+                                      newCatHandler, showCatHandler,
+                                      updateCatHandler)
+import           Snap.Core           (Method (..), method)
+import           Snap.Snaplet        (Handler)
+import           Snap.Util.FileServe (serveDirectory)
 
 routes :: [(ByteString, Handler App App ())]
 routes = [ ("/cat/new",      method GET    newCatHandler)

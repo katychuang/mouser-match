@@ -5,38 +5,15 @@ module Formlets.Cat
   )
  where
 
-import Text.Digestive
-  ( (.:)
-  , choice
-  , text
-  , Formlet
-  , stringRead
-  )
-import Entities.Cat
-  ( CatData(..)
-  , Cat(..)
-  , Temperament(..)
-  , Location(..)
-  , Base64Picture(..)
-  , name
-  , ownerName
-  , temperament
-  , location
-  , catId
-  , catData
-  , about
-  )
-import Data.Text (Text)
-import Control.Applicative 
-  ( (<$>)
-  , (<*>)
-  , pure
-  )
-import Control.Lens 
- ( view
- )
-
-import Choice(Choice(..), renderChoices)
+import           Choice              (Choice (..), renderChoices)
+import           Control.Applicative (pure, (<$>), (<*>))
+import           Control.Lens        (view)
+import           Data.Text           (Text)
+import           Entities.Cat        (Base64Picture (..), Cat (..),
+                                      CatData (..), Location (..),
+                                      Temperament (..), about, catData, catId,
+                                      location, name, ownerName, temperament)
+import           Text.Digestive      (Formlet, choice, stringRead, text, (.:))
 
 catFormlet :: Monad m => Formlet Text m Cat
 catFormlet c = Cat
@@ -51,7 +28,6 @@ catDataFormlet cd = CatData
   <*> "temperament" .: choice renderChoices (view temperament <$> cd)
   <*> "about"       .: text (view about <$> cd)
   <*> (pure (Base64Picture "hi"))
-
 
 instance Choice Temperament where
   renderChoice Friendly = "friendly"

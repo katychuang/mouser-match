@@ -4,30 +4,21 @@ module Site
   ( app
   ) where
 
-------------------------------------------------------------------------------
-import Snap.Snaplet
-  ( makeSnaplet
-  , nestSnaplet
-  , addRoutes
-  , SnapletInit
-  )
-import Snap.Snaplet.Auth
-  ( defAuthSettings
-  , addAuthSplices
-  )
-import Snap.Snaplet.Auth.Backends.JsonFile (initJsonFileAuthManager)
-import Snap.Snaplet.Heist (heistInit)
-import Snap.Snaplet.Session.Backends.CookieSession (initCookieSessionManager)
-import Application
-  ( App(..)
-  , heist
-  , auth
-  , acidState
-  , sess
-  )
-import Snap.Snaplet.AcidState (acidInit)
-import Routes (routes)
-import Data.Monoid (mempty)
+import           Application                                 (App (..),
+                                                              acidState, auth,
+                                                              heist, sess)
+import           Data.Monoid                                 (mempty)
+import           Routes                                      (routes)
+import           Snap.Snaplet                                (SnapletInit,
+                                                              addRoutes,
+                                                              makeSnaplet,
+                                                              nestSnaplet)
+import           Snap.Snaplet.AcidState                      (acidInit)
+import           Snap.Snaplet.Auth                           (addAuthSplices,
+                                                              defAuthSettings)
+import           Snap.Snaplet.Auth.Backends.JsonFile         (initJsonFileAuthManager)
+import           Snap.Snaplet.Heist                          (heistInit)
+import           Snap.Snaplet.Session.Backends.CookieSession (initCookieSessionManager)
 
 app :: SnapletInit App App
 app = makeSnaplet "app" "An snaplet example application." Nothing $ do
@@ -45,4 +36,3 @@ app = makeSnaplet "app" "An snaplet example application." Nothing $ do
     addRoutes routes
     addAuthSplices h auth
     return $ App h s a aS
-

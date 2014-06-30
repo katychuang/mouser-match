@@ -1,7 +1,7 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE TemplateHaskell    #-}
+{-# LANGUAGE TypeFamilies       #-}
 
 module Queries.Cat
   ( NewCat(..)
@@ -10,36 +10,14 @@ module Queries.Cat
   , UpdateCat(..)
   ) where
 
-import Data.Acid
-  ( makeAcidic
-  , Update
-  , Query
-  )
-import Control.Monad.Reader.Class (ask)
-import Control.Monad.State.Class
-  ( put
-  , get
-  )
-import Data.IxSet
-import Control.Lens
-  ( view
-  , over
-  , (^.)
-  , (+=)
-  , (%=)
-  , use
-  )
-import Entities.Cat
-  ( Cat(..)
-  , CatData(..)
-  , catId
-  )
-import Entities.AcidDB
-  ( AcidDB(..)
-  , cats
-  , newestCatId
-  )
-import Control.Applicative ((<$>))
+import           Control.Applicative        ((<$>))
+import           Control.Lens               (over, use, view, (%=), (+=), (^.))
+import           Control.Monad.Reader.Class (ask)
+import           Control.Monad.State.Class  (get, put)
+import           Data.Acid                  (Query, Update, makeAcidic)
+import           Data.IxSet
+import           Entities.AcidDB            (AcidDB (..), cats, newestCatId)
+import           Entities.Cat               (Cat (..), CatData (..), catId)
 
 newCat :: CatData -> Update AcidDB Cat
 newCat c = do
@@ -48,7 +26,7 @@ newCat c = do
     cats %= (\cs -> insert new cs)
     newestCatId += 1
     return new
-  
+
 getCat :: Int -> Query AcidDB (Maybe Cat)
 getCat catId = do
   cs <- view cats
@@ -56,9 +34,8 @@ getCat catId = do
 
 updateCat :: Cat -> Update AcidDB ()
 updateCat cat = cats %= updateIx (cat^.catId) cat
-      
+
 allCats :: Query AcidDB [Cat]
 allCats = toList <$> view cats
 
 $(makeAcidic ''AcidDB ['newCat, 'getCat, 'allCats, 'updateCat])
-

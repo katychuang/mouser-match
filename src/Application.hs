@@ -1,35 +1,24 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module Application where
 
-import Control.Lens (makeLenses, view)
-import Snap.Snaplet
-  ( Snaplet
-  , snapletValue
-  , Handler
-  , subSnaplet
-  )
-import Snap.Snaplet.Heist 
-  ( Heist
-  , HasHeist(..)
-  )
-import Snap.Snaplet.Auth (AuthManager)
-import Snap.Snaplet.Session (SessionManager)
-import Snap.Snaplet.AcidState
-  ( Acid
-  , HasAcid
-  , getAcidStore
-  )
-import Entities.AcidDB (AcidDB)
+import           Control.Lens           (makeLenses, view)
+import           Entities.AcidDB        (AcidDB)
+import           Snap.Snaplet           (Handler, Snaplet, snapletValue,
+                                         subSnaplet)
+import           Snap.Snaplet.AcidState (Acid, HasAcid, getAcidStore)
+import           Snap.Snaplet.Auth      (AuthManager)
+import           Snap.Snaplet.Heist     (HasHeist (..), Heist)
+import           Snap.Snaplet.Session   (SessionManager)
 
 data App = App
-    { _heist :: Snaplet (Heist App)
-    , _sess :: Snaplet SessionManager
-    , _auth :: Snaplet (AuthManager App)
+    { _heist     :: Snaplet (Heist App)
+    , _sess      :: Snaplet SessionManager
+    , _auth      :: Snaplet (AuthManager App)
     , _acidState :: Snaplet (Acid AcidDB)
     }
 
