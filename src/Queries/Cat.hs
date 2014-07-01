@@ -15,17 +15,18 @@ import           Control.Lens               (over, use, view, (%=), (+=), (^.))
 import           Control.Monad.Reader.Class (ask)
 import           Control.Monad.State.Class  (get, put)
 import           Data.Acid                  (Query, Update, makeAcidic)
-import           Data.IxSet
+import           Data.IxSet                 (getOne, insert, toList, updateIx,
+                                             (@=))
 import           Entities.AcidDB            (AcidDB (..), cats, newestCatId)
 import           Entities.Cat               (Cat (..), CatData (..), catId)
 
 newCat :: CatData -> Update AcidDB Cat
 newCat c = do
-    id <- use newestCatId
-    let new = Cat {_catId = id, _catData = c}
-    cats %= (\cs -> insert new cs)
-    newestCatId += 1
-    return new
+  id <- use newestCatId
+  let new = Cat {_catId = id, _catData = c}
+  cats %= insert new
+  newestCatId += 1
+  return new
 
 getCat :: Int -> Query AcidDB (Maybe Cat)
 getCat catId = do

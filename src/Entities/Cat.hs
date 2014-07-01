@@ -67,13 +67,6 @@ data Cat = Cat
 $(deriveSafeCopy 0 'base ''Cat)
 
 
-instance Monoid CatData where
-  mempty = CatData "" "" (toEnum 0) (toEnum 0) "" (Base64Picture "")
-  mappend x y =
-    if (x == mempty)
-      then y
-      else x
-
 instance Indexable Cat where
   empty = ixSet [ ixGen (Proxy :: Proxy Int) ]
 
