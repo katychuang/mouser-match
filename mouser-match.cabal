@@ -54,7 +54,7 @@ Executable mouser-match
     validations               >= 0.1.0.1,
     ixset                     >= 1.0.5,
     text-format               >= 0.3.1.1,
-    snaplet-fay               >= 0.3.3.7
+    purescript                >= 0.5.2.5
 
 
   if flag(development)
