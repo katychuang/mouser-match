@@ -79,7 +79,7 @@ showCatHandler = do
         "about"       #! catText about;
       };
       renderWithSplices "show_cat" splices
-    Nothing -> undefined
+    Nothing -> error "bad show"
 
 updateCatHandler :: Handler App App ()
 updateCatHandler = do
