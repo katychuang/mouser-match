@@ -1,19 +1,31 @@
 <apply template="base">
+<header id="jump">
+  <div className="sections pull-left">
+    <a href="/">
+      <i class="fa fa-home"></i>
+    </a>
+  </div>
+</header>
 
-  <ifLoggedIn>
-    <p>
-      This is a simple demo page served using
-      <a href="http://snapframework.com/docs/tutorials/heist">Heist</a>
-      and the <a href="http://snapframework.com/">Snap</a> web framework.
-    </p>
+  <div id="splash">
+    <h1 class="demo-logo">
+        Mouser Match
+        <small>Lorem Ipsum</small>
+      </h1>
+  </div>
 
-    <p>Congrats!  You're logged in as '<loggedInUser/>'</p>
+<div class="container">
+  <div class="row">
+    <div class="col-md-8 col-md-offset-2 main">
+      <ifLoggedIn>
+        <p>Congrats!  You're logged in as '<loggedInUser/>'</p>
+        <p><a href="/logout">Logout</a></p>
+      </ifLoggedIn>
 
-    <p><a href="/logout">Logout</a></p>
-  </ifLoggedIn>
-
-  <ifLoggedOut>
-    <apply template="_login"/>
-  </ifLoggedOut>
-
+      <ifLoggedOut>
+        <apply template="_login"/>
+      </ifLoggedOut>
+    </div>
+  </div>
+</div>
 </apply>
